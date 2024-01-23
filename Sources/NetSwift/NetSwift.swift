@@ -14,13 +14,24 @@ public final class NetworkManager {
         var request = URLRequest(url: url)
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Response Headers: \(httpResponse.allHeaderFields)")
+        }
+        
+        if let responseBody = String(data: data, encoding: .utf8) {
+            print("Response Body: \(responseBody)")
+        }
+
         guard !data.isEmpty else {
             throw NetworkError.noData
         }
+
         let decodedData = try JSONDecoder().decode(T.self, from: data)
         return decodedData
     }
+
     
     public func postData<T: Encodable>(to url: URL, body: T) async throws -> (Data, URLResponse) {
         var request = URLRequest(url: url)
