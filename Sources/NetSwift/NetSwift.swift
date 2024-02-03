@@ -61,6 +61,22 @@ public final class NetworkManager {
         
         return (data, response)
     }
-
+    
+    public func deleteDataWithHeaders(to url: URL, headers: [String: String]) async throws -> (Data, URLResponse) {
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        
+        for (key, value) in headers {
+            request.addValue(value, forHTTPHeaderField: key)
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+        
+        return (data, response)
+    }
 }
 
