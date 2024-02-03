@@ -12,4 +12,5 @@ public enum NetworkError: Error {
     case invalidResponse
     case decodingError(Error)
     case serverError(Int)
-} 
+    case backendError(BackendError)
+}

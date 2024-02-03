@@ -45,21 +45,37 @@ public final class NetworkManager {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = try JSONEncoder().encode(body)
-        
+
         for (key, value) in headers {
             request.addValue(value, forHTTPHeaderField: key)
         }
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
-            /// let backendError = try JSONDecoder().decode(BackendError.self, from: data)
-            /// throw NetworkError.backendError(backendError)
-            
-            throw NetworkError.serverError(httpResponse.statusCode)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NetworkError.invalidResponse
+            }
+
+            // Check if the status code is not in the range of 200 to 299
+            if !(200...299).contains(httpResponse.statusCode) {
+                // Attempt to decode the server's error response into a meaningful error object
+                if let backendError = try? JSONDecoder().decode(BackendError.self, from: data) {
+                    throw NetworkError.backendError(backendError)
+                } else {
+                    // If decoding the server error fails, throw a general server error with the status code
+                    throw NetworkError.serverError(httpResponse.statusCode)
+                }
+            }
+
+            return (data, response)
+        } catch let error as NetworkError {
+            // Rethrow custom network errors
+            throw error
+        } catch {
+            // For all other errors, consider throwing a generic network error or logging additional details
+            print("Unexpected error: \(error.localizedDescription).")
+            throw NetworkError.decodingError(error)
         }
-        
-        return (data, response)
     }
     
     public func deleteDataWithHeaders(to url: URL, headers: [String: String]) async throws -> (Data, URLResponse) {
