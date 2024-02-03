@@ -32,8 +32,6 @@ public final class NetworkManager {
         }
     }
     
-    
-    
     public func postData<T: Encodable>(to url: URL, body: T) async throws -> (Data, URLResponse) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -42,5 +40,27 @@ public final class NetworkManager {
         let (data, response) = try await URLSession.shared.data(for: request)
         return (data, response)
     }
+    
+    public func postDataWithHeaders<T: Encodable>(to url: URL, body: T, headers: [String: String]) async throws -> (Data, URLResponse) {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try JSONEncoder().encode(body)
+        
+        for (key, value) in headers {
+            request.addValue(value, forHTTPHeaderField: key)
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
+            /// let backendError = try JSONDecoder().decode(BackendError.self, from: data)
+            /// throw NetworkError.backendError(backendError)
+            
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+        
+        return (data, response)
+    }
+
 }
 
