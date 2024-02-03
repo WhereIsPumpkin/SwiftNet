@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct BackendError: Decodable {
+public struct BackendError: Decodable {
     let message: String
 }
