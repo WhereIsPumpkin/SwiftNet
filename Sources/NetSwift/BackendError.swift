@@ -8,5 +8,5 @@
 import Foundation
 
 public struct BackendError: Decodable {
-    let message: String
+    public let message: String
 }
