@@ -24,6 +24,10 @@ public final class NetworkManager {
             throw NetworkError.noData
         }
         
+        if let jsonStr = String(data: data, encoding: .utf8) {
+                print("Raw JSON response: \(jsonStr)")
+        }
+        
         do {
             let decodedData = try JSONDecoder().decode(T.self, from: data)
             return decodedData
@@ -56,23 +60,18 @@ public final class NetworkManager {
                 throw NetworkError.invalidResponse
             }
 
-            // Check if the status code is not in the range of 200 to 299
             if !(200...299).contains(httpResponse.statusCode) {
-                // Attempt to decode the server's error response into a meaningful error object
                 if let backendError = try? JSONDecoder().decode(BackendError.self, from: data) {
                     throw NetworkError.backendError(backendError)
                 } else {
-                    // If decoding the server error fails, throw a general server error with the status code
                     throw NetworkError.serverError(httpResponse.statusCode)
                 }
             }
 
             return (data, response)
         } catch let error as NetworkError {
-            // Rethrow custom network errors
             throw error
         } catch {
-            // For all other errors, consider throwing a generic network error or logging additional details
             print("Unexpected error: \(error.localizedDescription).")
             throw NetworkError.decodingError(error)
         }
