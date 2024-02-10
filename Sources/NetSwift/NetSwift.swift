@@ -24,10 +24,6 @@ public final class NetworkManager {
             throw NetworkError.noData
         }
         
-        if let jsonStr = String(data: data, encoding: .utf8) {
-                print("Raw JSON response: \(jsonStr)")
-        }
-        
         do {
             let decodedData = try JSONDecoder().decode(T.self, from: data)
             return decodedData
